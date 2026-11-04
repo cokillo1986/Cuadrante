@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuadrante de Tareas del Hogar</title>
+<style>
+  *{box-sizing:border-box} body{font-family:Arial,sans-serif;background:#f3f0e8;margin:0;padding:16px;color:#1e3246}
+  h1{margin:0} .top{background:#263a52;color:#fff;padding:18px;border-radius:16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  .top small{color:#cbd5e1} .card{background:#fff;border-radius:14px;padding:14px;margin-top:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .row{display:flex;gap:8px;flex-wrap:wrap} input,select,textarea{padding:10px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;flex:1;min-width:140px}
+  textarea{width:100%;min-height:70px} button{border:0;border-radius:10px;padding:11px 16px;font-weight:800;cursor:pointer}
+  .btn{background:#122f4a;color:#fff} .green{background:#128078;color:#fff} .red{background:#e5484d;color:#fff} .yellow{background:#ffb020}
+  .pill{background:#eef2ff;padding:6px 10px;border-radius:20px;display:inline-flex;gap:8px;align-items:center;margin:4px}
+  .pill b{cursor:pointer;color:#e5484d}
+  table{width:100%;border-collapse:collapse;margin-top:12px;background:#fff;border-radius:12px;overflow:hidden}
+  th{background:#263a52;color:#fff;padding:12px} td{border:1px solid #e2e8f0;padding:10px;vertical-align:top}
+  td:first-child{font-weight:900;background:#fef9c3;text-align:center;width:110px}
+  .task{background:#fff3cd;border:1px solid #fde68a;padding:8px;border-radius:10px;margin-bottom:6px;display:flex;justify-content:space-between;gap:6px}
+  .task button{padding:4px 8px;font-size:12px} .normas li{margin:6px 0}
+  @media print{ .no-print{display:none!important} body{background:#fff;padding:0} .card{box-shadow:none} }
+</style>
+</head>
+<body>
+
+<div class="top no-print">
+  <div><h1>🏠 Cuadrante de Tareas del Hogar</h1><small>Añade, edita y borra. Luego pulsa Imprimir.</small></div>
+  <button class="green" onclick="window.print()">🖨️ IMPRIMIR CUADRANTE</button>
+</div>
+
+<div class="card no-print">
+  <h3>1. Personas</h3>
+  <div class="row">
+    <input id="newPerson" placeholder="Ej: Gisela 16 años">
+    <button class="btn" onclick="addPerson()">+ Añadir persona</button>
+  </div>
+  <div id="persons"></div>
+</div>
+
+<div class="card no-print">
+  <h3>2. Añadir / Editar tarea</h3>
+  <div class="row">
+    <select id="day"><option>LUNES</option><option>MARTES</option><option>MIÉRCOLES</option><option>JUEVES</option><option>VIERNES</option><option>SÁBADO</option><option>DOMINGO</option></select>
+    <select id="personSel"></select>
+    <select id="zone"><option>HABITACIÓN</option><option>COCINA</option><option>COMEDOR + BAÑO</option><option>COMEDOR</option><option>BAÑO</option></select>
+  </div>
+  <textarea id="taskText" placeholder="Ej: Plegar ropa + Ordenar ropa y zapatos + Hacer camas + Suelos limpios, barridos y fregados"></textarea>
+  <div class="row">
+    <button class="green" onclick="saveTask()">💾 Guardar tarea</button>
+    <button onclick="clearForm()">Limpiar</button>
+  </div>
+  <small id="editInfo"></small>
+</div>
+
+<div class="card no-print">
+  <h3>3. Horarios y Normas</h3>
+  <div class="row">
+    <input id="horario1" value="Lunes a viernes: 17:30 - 18:00">
+    <input id="horario2" value="Sábado: 10:30 - 12:30">
+    <input id="horario3" value="Domingo: 11:00 - 11:30">
+  </div>
+  <textarea id="normasInput">1. Habitación: plegar ropa, ordenar ropa y zapatos, camas, suelos limpios y fregados.
+2. Comedor + Baño: quitar polvo, estanterías ordenadas, todo recogido, suelo barrido y fregado.
+3. Cocina: fregar platos, sacar lavadora, tender y descolgar ropa, sacar basura, trapos limpios.
+4. Finde: entre todos, campana + horno, armarios a fondo, mesa y sillas, todo a fondo.
+5. Pedir ayuda si hace falta. No dejar a medias.
+6. Dejar productos y utensilios guardados al terminar.
+7. Adultos supervisan productos de limpieza. NO mezclar productos.
+8. Semana a semana: rotar quién empieza en cada zona.</textarea>
+  <button class="btn" onclick="updateNormas()">Actualizar normas y horarios</button>
+</div>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between"><h2 style="margin:0">CUADRANTE DE TAREAS DEL HOGAR</h2><span id="printTitle"></span></div>
+  <p id="printPersons" style="font-weight:800"></p>
+  <table><thead><tr id="headRow"><th>DÍA</th></tr></thead><tbody id="tbody"></tbody></table>
+  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:14px">
+    <div style="flex:1;background:#128078;color:#fff;padding:14px;border-radius:12px"><b>HORARIOS</b><div id="printHorarios"></div><p>Si no se termina, se termina antes de jugar / pantallas.<br><b>Cada uno deja su zona TERMINADA ese día.</b></p></div>
+    <div style="flex:1.4;border:1px solid #ddd;padding:14px;border-radius:12px"><b style="color:#128078">NORMAS DE LA CASA</b><ol id="printNormas"></ol></div>
+  </div>
+</div>
+
+<script>
+let persons = ["Gisela 16 años","José Ángel 12 años","Erika 10 años"];
+let tasks = [
+ {day:"LUNES",person:"Gisela 16 años",zone:"HABITACIÓN",text:"Plegar ropa + Ordenar ropa y zapatos + Hacer camas + Suelos limpios, barridos y fregados + Todo bien ordenado"},
+ {day:"LUNES",person:"José Ángel 12 años",zone:"COCINA",text:"Fregar platos + Sacar lavadora + Tender y descolgar ropa del tendedero + Sacar basura + Trapos limpios"},
+ {day:"LUNES",person:"Erika 10 años",zone:"COMEDOR + BAÑO",text:"Quitar el polvo + Estanterías ordenadas + Objetos y utensilios todo recogido + Suelo barrido y fregado + Fuera polvo"},
+ {day:"MARTES",person:"Gisela 16 años",zone:"COCINA",text:"Fregar platos + Sacar lavadora + Tender y descolgar ropa + Sacar basura + Trapos limpios"},
+ {day:"MARTES",person:"José Ángel 12 años",zone:"COMEDOR + BAÑO",text:"Quitar el polvo + Estanterías ordenadas + Todo recogido + Suelo barrido y fregado"},
+ {day:"MARTES",person:"Erika 10 años",zone:"HABITACIÓN",text:"Plegar ropa + Ordenar ropa y zapatos + Hacer camas + Suelos limpios y fregados"},
+ {day:"MIÉRCOLES",person:"Gisela 16 años",zone:"COMEDOR + BAÑO",text:"Quitar polvo + Estanterías ordenadas + Todo recogido + Suelo barrido y fregado + Fuera polvo"},
+ {day:"MIÉRCOLES",person:"José Ángel 12 años",zone:"HABITACIÓN",text:"Plegar ropa + Ordenar ropa y zapatos + Hacer camas + Suelos limpios y fregados"},
+ {day:"MIÉRCOLES",person:"Erika 10 años",zone:"COCINA",text:"Fregar platos + Sacar lavadora + Tender y descolgar ropa + Sacar basura + Trapos limpios"},
+ {day:"SÁBADO",person:"Gisela 16 años",zone:"HABITACIÓN",text:"A FONDO: Armarios a fondo + Plegar ropa + Camas + Suelos barridos y fregados + Baño a fondo"},
+ {day:"SÁBADO",person:"José Ángel 12 años",zone:"COCINA",text:"A FONDO: Campana + Horno a fondo + Fregar platos + Sacar lavadora + Tender ropa + Basura"},
+ {day:"SÁBADO",person:"Erika 10 años",zone:"COMEDOR",text:"A FONDO: Armarios + Mesa y sillas a fondo + Estanterías ordenadas + Suelo barrido y fregado"},
+];
+let editIndex = -1;
+const days = ["LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES","SÁBADO","DOMINGO"];
+
+function render(){
+  document.getElementById('persons').innerHTML = persons.map((p,i)=>`<span class="pill">${p} <b onclick="delPerson(${i})">✕</b></span>`).join('');
+  let sel = document.getElementById('personSel'); sel.innerHTML = persons.map(p=>`<option>${p}</option>`).join('');
+  document.getElementById('printPersons').textContent = persons.join("  •  ");
+  document.getElementById('printTitle').textContent = "Empezamos ayer y seguimos este horario tal cual";
+  document.getElementById('headRow').innerHTML = "<th>DÍA</th>" + persons.map(p=>`<th>${p.toUpperCase()}</th>`).join('');
+  let tb = document.getElementById('tbody'); tb.innerHTML = "";
+  days.forEach(d=>{
+    let tr = document.createElement('tr');
+    let tdDay = document.createElement('td'); tdDay.innerHTML = d + (d=="SÁBADO"||d=="DOMINGO"?"<br><small>Limpieza a fondo - Entre todos</small>":"<br><small>Mantenimiento</small>"); tr.appendChild(tdDay);
+    persons.forEach(p=>{
+      let td = document.createElement('td');
+      tasks.forEach((t,idx)=>{
+        if(t.day==d && t.person==p){
+          let div = document.createElement('div'); div.className='task';
+          div.innerHTML = `<span><b>${t.zone}:</b> ${t.text}</span><span class="no-print"><button onclick="editTask(${idx})">✏️</button> <button class="red" onclick="delTask(${idx})">🗑️</button></span>`;
+          td.appendChild(div);
+        }
+      });
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  updateNormas();
+}
+function addPerson(){ let v=document.getElementById('newPerson').value.trim(); if(!v) return; persons.push(v); document.getElementById('newPerson').value=""; render(); }
+function delPerson(i){ if(!confirm("¿Borrar persona y sus tareas?")) return; let name=persons[i]; persons.splice(i,1); tasks=tasks.filter(t=>t.person!==name); render(); }
+function saveTask(){
+  let t={day:document.getElementById('day').value, person:document.getElementById('personSel').value, zone:document.getElementById('zone').value, text:document.getElementById('taskText').value.trim()};
+  if(!t.text) return alert("Escribe la tarea");
+  if(editIndex>=0){ tasks[editIndex]=t; editIndex=-1; document.getElementById('editInfo').textContent=""; }
+  else tasks.push(t);
+  clearForm(); render();
+}
+function editTask(i){ let t=tasks[i]; editIndex=i; document.getElementById('day').value=t.day; document.getElementById('personSel').value=t.person; document.getElementById('zone').value=t.zone; document.getElementById('taskText').value=t.text; document.getElementById('editInfo').textContent="✏️ Estás editando una tarea. Pulsa Guardar tarea para actualizar."; window.scrollTo({top:0,behavior:'smooth'}); }
+function delTask(i){ if(confirm("¿Borrar esta tarea?")){ tasks.splice(i,1); render(); } }
+function clearForm(){
