@@ -3,47 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Partes - Admin</title>
+<title>Partes - Profe</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body{font-family:system-ui;background:#f4f4f5;margin:0;padding:16px}
-.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 8px #0001}
-h1{margin:0 0 12px} input,select,button{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:1px solid #ddd;font-size:16px}
-button{background:#111;color:#fff;border:none;font-weight:700}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;margin:0;padding:0;color:#0f172a}
+header{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:22px 16px 28px;border-radius:0 0 24px 24px}
+header h1{margin:0;font-size:26px}
+header p{margin:6px 0 0;opacity:.85;font-size:14px}
+.wrap{padding:16px;max-width:600px;margin:0 auto}
+.card{background:#fff;border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 20px #0002}
+h2,h3{margin:0 0 10px}
+input{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:1.5px solid #e2e8f0;font-size:16px;background:#f8fafc}
+button{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:none;font-size:16px;font-weight:800;cursor:pointer}
+.btn-primary{background:#4f46e5;color:#fff}
+.btn-dark{background:#0f172a;color:#fff}
+.btn-danger{background:#ef4444;color:#fff}
+.btn-green{background:#16a34a;color:#fff}
+.btn-blue{background:#2563eb;color:#fff}
+.btn-light{background:#f1f5f9;color:#0f172a}
 .row{display:flex;gap:8px} .row button{flex:1}
-.badge{display:inline-block;padding:4px 10px;border-radius:99px;font-size:13px;font-weight:700}
-.ok{background:#dcfce7} .no{background:#fee2e2}
-.small{font-size:13px;color:#666}
+.badge{display:inline-block;padding:6px 12px;border-radius:99px;font-size:13px;font-weight:800}
+.ok{background:#dcfce7;color:#166534} .no{background:#fee2e2;color:#991b1b}
+.small{font-size:13px;color:#64748b}
 .hidden{display:none}
+.progress{height:10px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin:10px 0}
+.progress > div{height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444);transition:width .3s}
+.norma{display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:10px 12px;border-radius:12px;margin-bottom:6px;font-size:14px}
+.norma button{width:auto;padding:6px 10px;font-size:12px;background:#fee2e2;color:#991b1b;margin:0}
+.alumno-nombre{font-size:18px;font-weight:800}
+.partes-num{font-size:36px;font-weight:900;line-height:1}
+.top-row{display:flex;justify-content:space-between;align-items:flex-start}
+.search{position:sticky;top:0;z-index:10;background:#0f172a;padding:12px 16px}
+.search input{margin:0;background:#fff}
 </style>
 </head>
 <body>
+<header>
 <h1>📋 Partes - Profe</h1>
+<p>Control de partes • 5 partes = sin privilegios</p>
+</header>
 
-<div id="login" class="card">
+<div id="login" class="wrap">
+<div class="card" style="text-align:center;padding:28px 16px">
+<div style="font-size:50px">🔒</div>
 <h2>Entrar</h2>
-<input id="pass" type="password" placeholder="Clave">
-<button onclick="entrar()">Entrar</button>
+<p class="small">Escribe tu clave para entrar</p>
+<input id="pass" type="password" placeholder="Clave" onkeydown="if(event.key==='Enter') entrar()">
+<button class="btn-primary" onclick="entrar()">Entrar →</button>
 <p class="small">Clave: Partes.123</p>
+</div>
 </div>
 
 <div id="app" class="hidden">
+<div class="search"><input id="buscar" placeholder="🔍 Buscar por nombre..." oninput="cargar()"></div>
+<div class="wrap">
 <div class="card">
-<h3>➕ Añadir alumno</h3>
-<input id="nombre" placeholder="Nombre alumno">
+<h3>➕ Añadir nombre</h3>
+<input id="nombre" placeholder="Nombre Ej: Lucía García">
 <input id="curso" placeholder="Curso Ej: 3A">
-<button onclick="addAlumno()">Añadir alumno</button>
+<button class="btn-primary" onclick="addAlumno()">+ Añadir nombre</button>
 </div>
 
 <div class="card">
 <h3>📜 Normas</h3>
 <div id="normas"></div>
 <input id="nuevaNorma" placeholder="Nueva norma Ej: 3 partes = sin recreo">
-<button onclick="addNorma()">Añadir norma</button>
+<button class="btn-dark" onclick="addNorma()">Añadir norma</button>
 </div>
 
-<div id="lista"></div>
-<button onclick="location.reload()" style="background:#eee;color:#000">🔄 Actualizar</button>
+<div style="display:flex;justify-content:space-between;align-items:center">
+<h3 style="margin:0">👨‍🎓 Nombres</h3>
+<span id="total" class="small"></span>
+</div>
+<div id="lista" style="margin-top:10px"></div>
+<button class="btn-light" onclick="cargar()">🔄 Actualizar</button>
+<p class="small" style="text-align:center">Para cambiar la clave, busca en el código: const CLAVE = "Partes.123"</p>
+</div>
 </div>
 
 <script>
@@ -61,39 +97,68 @@ function entrar(){
 }
 
 async function cargar(){
+  let q = document.getElementById('buscar') ? document.getElementById('buscar').value.toLowerCase() : '';
   let {data: alumnos} = await sb.from('alumnos').select('*').order('nombre');
   let {data: normas} = await sb.from('normas').select('*').order('id');
-  document.getElementById('normas').innerHTML = normas.map(n=>`<div>• ${n.texto} <button onclick="delNorma(${n.id})" style="width:auto;padding:4px 8px;background:#fee2e2;color:#000">Borrar</button></div>`).join('');
-  document.getElementById('lista').innerHTML = alumnos.map(a=>`
-    <div class="card">
-      <b>${a.nombre}</b> <span class="small">${a.curso||''}</span><br>
-      <span style="font-size:28px;font-weight:800">${a.partes||0} partes</span><br>
-      <span class="badge ${a.privilegios==='TIENE'?'ok':'no'}">${a.privilegios||'TIENE'}</span>
-      <div class="row">
-        <button onclick="cambiarPartes(${a.id},${a.partes||0},1)" style="background:#dc2626">+1 Parte</button>
-        <button onclick="cambiarPartes(${a.id},${a.partes||0},-1)" style="background:#059669">-1 Parte</button>
+  if(!alumnos) alumnos=[]; if(!normas) normas=[];
+  if(q) alumnos = alumnos.filter(a=> (a.nombre||'').toLowerCase().includes(q) || (a.curso||'').toLowerCase().includes(q));
+  document.getElementById('total').textContent = alumnos.length + ' nombres';
+  document.getElementById('normas').innerHTML = normas.map(n=>`<div class="norma"><span>• ${n.texto}</span><button onclick="delNorma(${n.id})">Borrar</button></div>`).join('');
+  if(alumnos.length===0){
+    document.getElementById('lista').innerHTML = '<div class="card" style="text-align:center"><p>Sin nombres todavía.<br><span class="small">Añade el primero arriba 👆</span></p></div>';
+    return;
+  }
+  document.getElementById('lista').innerHTML = alumnos.map(a=>{
+    let partes = a.partes||0;
+    let pct = Math.min(100, (partes/5)*100);
+    let sin = a.privilegios !== 'TIENE';
+    return `
+    <div class="card" style="${sin ? 'border:2px solid #ef4444' : ''}">
+      <div class="top-row">
+        <div><div class="alumno-nombre">${a.nombre}</div><span class="small">Curso: ${a.curso||'-'}</span></div>
+        <span class="badge ${sin?'no':'ok'}">${sin?'⛔ SIN PRIVILEGIOS':'✅ TIENE'}</span>
       </div>
-      <button onclick="borrar(${a.id})" style="background:#eee;color:#000">Borrar alumno</button>
-    </div>`).join('');
+      <div style="display:flex;align-items:baseline;gap:8px;margin-top:8px">
+        <span class="partes-num">${partes}</span><span style="font-weight:700;color:#64748b">/ 5 partes</span>
+      </div>
+      <div class="progress"><div style="width:${pct}%"></div></div>
+      <div class="small">${partes===0?'Sin partes, ¡muy bien!': partes===4 ? '⚠️ ¡Cuidado! Le falta 1 para quedarse sin privilegios' : partes + ' partes acumuladas'}</div>
+      <div class="row">
+        <button class="btn-danger" onclick="cambiarPartes(${a.id},${partes},1)">+1 Parte</button>
+        <button class="btn-green" onclick="cambiarPartes(${a.id},${partes},-1)">-1 Parte</button>
+      </div>
+      ${sin ? `<button class="btn-blue" onclick="devolverPrivilegios(${a.id})">✅ Devolver privilegios</button>` : ''}
+      <button class="btn-light" onclick="borrar(${a.id})">🗑️ Borrar nombre</button>
+    </div>`}).join('');
 }
 
 async function cambiarPartes(id, actual, delta){
   let nuevo = Math.max(0, actual + delta);
-  let priv = nuevo >= 3 ? 'SIN PRIVILEGIOS' : 'TIENE';
+  let priv = 'TIENE';
+  if(nuevo >= 5){
+    nuevo = 0;
+    priv = 'SIN PRIVILEGIOS';
+    alert('¡Ha llegado a 5 partes! Se queda SIN PRIVILEGIOS y el contador vuelve a 0');
+  }
   await sb.from('alumnos').update({partes:nuevo, privilegios:priv}).eq('id', id);
   cargar();
 }
+async function devolverPrivilegios(id){
+  if(!confirm('¿Devolver privilegios?')) return;
+  await sb.from('alumnos').update({privilegios:'TIENE', partes:0}).eq('id', id);
+  cargar();
+}
 async function addAlumno(){
-  let nombre=document.getElementById('nombre').value;
-  let curso=document.getElementById('curso').value;
-  if(!nombre) return alert('Pon nombre');
+  let nombre=document.getElementById('nombre').value.trim();
+  let curso=document.getElementById('curso').value.trim();
+  if(!nombre) return alert('Pon el nombre');
   await sb.from('alumnos').insert({nombre, curso, partes:0, privilegios:'TIENE'});
   document.getElementById('nombre').value=''; document.getElementById('curso').value='';
   cargar();
 }
-async function borrar(id){ if(confirm('¿Borrar?')){ await sb.from('alumnos').delete().eq('id',id); cargar(); } }
+async function borrar(id){ if(confirm('¿Borrar este nombre?')){ await sb.from('alumnos').delete().eq('id',id); cargar(); } }
 async function addNorma(){
-  let t=document.getElementById('nuevaNorma').value;
+  let t=document.getElementById('nuevaNorma').value.trim();
   if(!t) return;
   await sb.from('normas').insert({texto:t});
   document.getElementById('nuevaNorma').value=''; cargar();
