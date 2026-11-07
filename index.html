@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <title>Partes - Profe - Cuadrante v2.1</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -48,7 +46,6 @@ button{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:none;font-
 <p>Control de partes • 5 partes = sin privilegios</p>
 <span class="version">✅ VERSIÓN NUEVA v2.1 • CUADRANTE</span>
 </header>
-
 <div id="login" class="wrap">
 <div class="card" style="text-align:center;padding:28px 16px">
 <div style="font-size:50px">🔒</div>
@@ -58,7 +55,6 @@ button{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:none;font-
 <button class="btn-primary" onclick="entrar()">Entrar →</button>
 </div>
 </div>
-
 <div id="app" class="hidden">
 <div class="search"><input id="buscar" placeholder="🔍 Buscar por nombre..." oninput="cargar()"></div>
 <div class="wrap">
@@ -68,30 +64,26 @@ button{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:none;font-
 <input id="curso" placeholder="Curso Ej: 3A">
 <button class="btn-primary" onclick="addNombre()">+ Añadir nombre</button>
 </div>
-
 <div class="card">
 <h3>📜 Normas</h3>
 <div id="normas"></div>
 <input id="nuevaNorma" placeholder="Nueva norma Ej: 3 partes = sin recreo">
 <button class="btn-dark" onclick="addNorma()">Añadir norma</button>
 </div>
-
 <div style="display:flex;justify-content:space-between;align-items:center">
 <h3 style="margin:0">👨‍🎓 Nombres</h3>
 <span id="total" class="small"></span>
 </div>
 <div id="lista" style="margin-top:10px"></div>
 <button class="btn-light" onclick="cargar()">🔄 Actualizar</button>
-<p class="small" style="text-align:center">Versión 2.1 • Cuadrante • Si no ves la etiqueta amarilla de arriba, es la versión vieja</p>
+<p class="small" style="text-align:center">Versión 2.1 • Cuadrante</p>
 </div>
 </div>
-
 <script>
 const SUPABASE_URL = "https://semoeiilmmzfjgzqiscp.supabase.co";
 const SUPABASE_KEY = "sb_publishable_SDNhqpqi0hGgJXxR1rpM2g_I6Jm1NWr";
 const CLAVE = "Partes.123";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 function entrar(){
   if(document.getElementById('pass').value === CLAVE){
     document.getElementById('login').classList.add('hidden');
@@ -99,12 +91,11 @@ function entrar(){
     cargar();
   } else alert('Clave incorrecta');
 }
-
 async function cargar(){
   let q = document.getElementById('buscar') ? document.getElementById('buscar').value.toLowerCase() : '';
   let {data: alumnos, error} = await sb.from('alumnos').select('*').order('nombre');
   let {data: normas} = await sb.from('normas').select('*').order('id');
-  if(error){ alert('Error conectando con la base de datos. Revisa Supabase.'); return; }
+  if(error){ alert('Error conectando con la base de datos.'); return; }
   if(!alumnos) alumnos=[]; if(!normas) normas=[];
   if(q) alumnos = alumnos.filter(a=> (a.nombre||'').toLowerCase().includes(q) || (a.curso||'').toLowerCase().includes(q));
   document.getElementById('total').textContent = alumnos.length + ' nombres';
@@ -127,7 +118,7 @@ async function cargar(){
         <span class="partes-num">${partes}</span><span style="font-weight:700;color:#64748b">/ 5 partes</span>
       </div>
       <div class="progress"><div style="width:${pct}%"></div></div>
-      <div class="small">${partes===0 && !sin ?'Sin partes, ¡muy bien!': sin ? 'Está SIN PRIVILEGIOS. Pulsa Devolver privilegios para perdonar.' : partes===4 ? '⚠️ ¡Cuidado! Le falta 1 para quedarse sin privilegios' : partes + ' partes acumuladas'}</div>
+      <div class="small">${partes===0 && !sin ?'Sin partes, ¡muy bien!': sin ? 'Está SIN PRIVILEGIOS. Pulsa Devolver privilegios.' : partes===4 ? '⚠️ ¡Cuidado! Le falta 1 para quedarse sin privilegios' : partes + ' partes acumuladas'}</div>
       <div class="row">
         <button class="btn-danger" onclick="cambiarPartes(${a.id},${partes},1,'${a.privilegios}')">+1 Parte</button>
         <button class="btn-green" onclick="cambiarPartes(${a.id},${partes},-1,'${a.privilegios}')">-1 Parte</button>
@@ -136,19 +127,11 @@ async function cargar(){
       <button class="btn-light" onclick="borrar(${a.id})">🗑️ Borrar nombre</button>
     </div>`}).join('');
 }
-
 async function cambiarPartes(id, actual, delta, privActual){
-  if(privActual !== 'TIENE'){
-    alert('Este nombre ya está SIN PRIVILEGIOS. Pulsa Devolver privilegios para perdonarlo.');
-    return;
-  }
+  if(privActual !== 'TIENE'){ alert('Ya está SIN PRIVILEGIOS. Pulsa Devolver privilegios.'); return; }
   let nuevo = Math.max(0, actual + delta);
   let priv = 'TIENE';
-  if(nuevo >= 5){
-    nuevo = 0;
-    priv = 'SIN PRIVILEGIOS';
-    alert('¡Ha llegado a 5 partes! Se queda SIN PRIVILEGIOS y el contador vuelve a 0');
-  }
+  if(nuevo >= 5){ nuevo = 0; priv = 'SIN PRIVILEGIOS'; alert('¡Ha llegado a 5 partes! Se queda SIN PRIVILEGIOS y el contador vuelve a 0'); }
   await sb.from('alumnos').update({partes:nuevo, privilegios:priv}).eq('id', id);
   cargar();
 }
@@ -165,7 +148,6 @@ async function addNombre(){
   document.getElementById('nombre').value=''; document.getElementById('curso').value='';
   cargar();
 }
-async function addAlumno(){ return addNombre(); }
 async function borrar(id){ if(confirm('¿Borrar este nombre?')){ await sb.from('alumnos').delete().eq('id',id); cargar(); } }
 async function addNorma(){
   let t=document.getElementById('nuevaNorma').value.trim();
