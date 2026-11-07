@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Partes - Profe</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Partes - Profe - Cuadrante v2.1</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
@@ -36,12 +39,14 @@ button{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:none;font-
 .top-row{display:flex;justify-content:space-between;align-items:flex-start}
 .search{position:sticky;top:0;z-index:10;background:#0f172a;padding:12px 16px}
 .search input{margin:0;background:#fff}
+.version{background:#f59e0b;color:#000;font-size:12px;font-weight:900;padding:4px 10px;border-radius:99px;display:inline-block;margin-top:8px}
 </style>
 </head>
 <body>
 <header>
 <h1>📋 Partes - Profe</h1>
 <p>Control de partes • 5 partes = sin privilegios</p>
+<span class="version">✅ VERSIÓN NUEVA v2.1 • CUADRANTE</span>
 </header>
 
 <div id="login" class="wrap">
@@ -51,7 +56,6 @@ button{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:none;font-
 <p class="small">Escribe tu clave para entrar</p>
 <input id="pass" type="password" placeholder="Clave" onkeydown="if(event.key==='Enter') entrar()">
 <button class="btn-primary" onclick="entrar()">Entrar →</button>
-<p class="small">Clave: Partes.123</p>
 </div>
 </div>
 
@@ -62,7 +66,7 @@ button{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:none;font-
 <h3>➕ Añadir nombre</h3>
 <input id="nombre" placeholder="Nombre Ej: Lucía García">
 <input id="curso" placeholder="Curso Ej: 3A">
-<button class="btn-primary" onclick="addAlumno()">+ Añadir nombre</button>
+<button class="btn-primary" onclick="addNombre()">+ Añadir nombre</button>
 </div>
 
 <div class="card">
@@ -78,7 +82,7 @@ button{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:none;font-
 </div>
 <div id="lista" style="margin-top:10px"></div>
 <button class="btn-light" onclick="cargar()">🔄 Actualizar</button>
-<p class="small" style="text-align:center">Para cambiar la clave, busca en el código: const CLAVE = "Partes.123"</p>
+<p class="small" style="text-align:center">Versión 2.1 • Cuadrante • Si no ves la etiqueta amarilla de arriba, es la versión vieja</p>
 </div>
 </div>
 
@@ -98,8 +102,9 @@ function entrar(){
 
 async function cargar(){
   let q = document.getElementById('buscar') ? document.getElementById('buscar').value.toLowerCase() : '';
-  let {data: alumnos} = await sb.from('alumnos').select('*').order('nombre');
+  let {data: alumnos, error} = await sb.from('alumnos').select('*').order('nombre');
   let {data: normas} = await sb.from('normas').select('*').order('id');
+  if(error){ alert('Error conectando con la base de datos. Revisa Supabase.'); return; }
   if(!alumnos) alumnos=[]; if(!normas) normas=[];
   if(q) alumnos = alumnos.filter(a=> (a.nombre||'').toLowerCase().includes(q) || (a.curso||'').toLowerCase().includes(q));
   document.getElementById('total').textContent = alumnos.length + ' nombres';
@@ -122,17 +127,21 @@ async function cargar(){
         <span class="partes-num">${partes}</span><span style="font-weight:700;color:#64748b">/ 5 partes</span>
       </div>
       <div class="progress"><div style="width:${pct}%"></div></div>
-      <div class="small">${partes===0?'Sin partes, ¡muy bien!': partes===4 ? '⚠️ ¡Cuidado! Le falta 1 para quedarse sin privilegios' : partes + ' partes acumuladas'}</div>
+      <div class="small">${partes===0 && !sin ?'Sin partes, ¡muy bien!': sin ? 'Está SIN PRIVILEGIOS. Pulsa Devolver privilegios para perdonar.' : partes===4 ? '⚠️ ¡Cuidado! Le falta 1 para quedarse sin privilegios' : partes + ' partes acumuladas'}</div>
       <div class="row">
-        <button class="btn-danger" onclick="cambiarPartes(${a.id},${partes},1)">+1 Parte</button>
-        <button class="btn-green" onclick="cambiarPartes(${a.id},${partes},-1)">-1 Parte</button>
+        <button class="btn-danger" onclick="cambiarPartes(${a.id},${partes},1,'${a.privilegios}')">+1 Parte</button>
+        <button class="btn-green" onclick="cambiarPartes(${a.id},${partes},-1,'${a.privilegios}')">-1 Parte</button>
       </div>
       ${sin ? `<button class="btn-blue" onclick="devolverPrivilegios(${a.id})">✅ Devolver privilegios</button>` : ''}
       <button class="btn-light" onclick="borrar(${a.id})">🗑️ Borrar nombre</button>
     </div>`}).join('');
 }
 
-async function cambiarPartes(id, actual, delta){
+async function cambiarPartes(id, actual, delta, privActual){
+  if(privActual !== 'TIENE'){
+    alert('Este nombre ya está SIN PRIVILEGIOS. Pulsa Devolver privilegios para perdonarlo.');
+    return;
+  }
   let nuevo = Math.max(0, actual + delta);
   let priv = 'TIENE';
   if(nuevo >= 5){
@@ -148,7 +157,7 @@ async function devolverPrivilegios(id){
   await sb.from('alumnos').update({privilegios:'TIENE', partes:0}).eq('id', id);
   cargar();
 }
-async function addAlumno(){
+async function addNombre(){
   let nombre=document.getElementById('nombre').value.trim();
   let curso=document.getElementById('curso').value.trim();
   if(!nombre) return alert('Pon el nombre');
@@ -156,6 +165,7 @@ async function addAlumno(){
   document.getElementById('nombre').value=''; document.getElementById('curso').value='';
   cargar();
 }
+async function addAlumno(){ return addNombre(); }
 async function borrar(id){ if(confirm('¿Borrar este nombre?')){ await sb.from('alumnos').delete().eq('id',id); cargar(); } }
 async function addNorma(){
   let t=document.getElementById('nuevaNorma').value.trim();
