@@ -2,160 +2,145 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>Partes - Profe - Cuadrante v2.1</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Partes</title>
 <style>
-*{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;margin:0;padding:0;color:#0f172a}
-header{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:22px 16px 28px;border-radius:0 0 24px 24px}
-header h1{margin:0;font-size:26px}
-header p{margin:6px 0 0;opacity:.85;font-size:14px}
-.wrap{padding:16px;max-width:600px;margin:0 auto}
-.card{background:#fff;border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 4px 20px #0002}
-h2,h3{margin:0 0 10px}
-input{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:1.5px solid #e2e8f0;font-size:16px;background:#f8fafc}
-button{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:none;font-size:16px;font-weight:800;cursor:pointer}
-.btn-primary{background:#4f46e5;color:#fff}
-.btn-dark{background:#0f172a;color:#fff}
-.btn-danger{background:#ef4444;color:#fff}
-.btn-green{background:#16a34a;color:#fff}
-.btn-blue{background:#2563eb;color:#fff}
-.btn-light{background:#f1f5f9;color:#0f172a}
-.row{display:flex;gap:8px} .row button{flex:1}
-.badge{display:inline-block;padding:6px 12px;border-radius:99px;font-size:13px;font-weight:800}
-.ok{background:#dcfce7;color:#166534} .no{background:#fee2e2;color:#991b1b}
-.small{font-size:13px;color:#64748b}
-.hidden{display:none}
-.progress{height:10px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin:10px 0}
-.progress > div{height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444);transition:width .3s}
-.norma{display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:10px 12px;border-radius:12px;margin-bottom:6px;font-size:14px}
-.norma button{width:auto;padding:6px 10px;font-size:12px;background:#fee2e2;color:#991b1b;margin:0}
-.alumno-nombre{font-size:18px;font-weight:800}
-.partes-num{font-size:36px;font-weight:900;line-height:1}
-.top-row{display:flex;justify-content:space-between;align-items:flex-start}
-.search{position:sticky;top:0;z-index:10;background:#0f172a;padding:12px 16px}
-.search input{margin:0;background:#fff}
-.version{background:#f59e0b;color:#000;font-size:12px;font-weight:900;padding:4px 10px;border-radius:99px;display:inline-block;margin-top:8px}
+  *{box-sizing:border-box}
+  body{font-family:sans-serif;background:#0f1115;color:white;padding:12px;margin:0}
+  input,button{padding:12px;border-radius:12px;border:none;font-size:15px}
+  input{width:100%;background:#1e2230;color:white;margin-bottom:8px}
+  .btn-add{background:#0a0a0a;color:white;width:100%;font-weight:bold;border:1px solid #333}
+  .card{background:white;color:#111;border-radius:20px;padding:16px;margin:14px 0}
+  .barra{height:12px;background:#e5e7eb;border-radius:20px;overflow:hidden;margin:8px 0}
+  .relleno{height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444)}
+  .row{display:flex;gap:8px}
+  .mas{flex:1;background:#ef4444;color:white;font-weight:bold}
+  .menos{flex:1;background:#16a34a;color:white;font-weight:bold}
+  .borrar{width:100%;background:#eef2f7;margin-top:8px}
+  .historial{margin-top:10px;background:#f8fafc;border-radius:12px;padding:10px;font-size:14px}
+  .parte-item{border-bottom:1px solid #e5e7eb;padding:8px 0}
+  .parte-item:last-child{border:none}
+  .fecha{font-weight:bold;font-size:13px;color:#444}
+  .motivo{margin-top:2px}
+  .btn-hist{background:#111;color:white;width:100%;margin-top:8px}
+  /* Modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:99}
+  .modal.show{display:flex}
+  .caja{background:white;color:#111;width:100%;max-width:500px;border-radius:20px 20px 0 0;padding:18px}
+  textarea{width:100%;height:90px;border-radius:12px;padding:12px;font-size:15px;border:1px solid #ccc}
 </style>
 </head>
 <body>
-<header>
-<h1>📋 Partes 5 </h1>
-<p>Control de partes • 5 partes = sin privilegios</p>
-<span class="version">✅ VERSIÓN NUEVA v2.1 • CUADRANTE</span>
-</header>
-<div id="login" class="wrap">
-<div class="card" style="text-align:center;padding:28px 16px">
-<div style="font-size:50px">🔒</div>
-<h2>Entrar</h2>
-<p class="small">Escribe tu clave para entrar</p>
-<input id="pass" type="password" placeholder="Clave" onkeydown="if(event.key==='Enter') entrar()">
-<button class="btn-primary" onclick="entrar()">Entrar →</button>
+
+<input id="buscador" placeholder="🔍 Buscar por nombre..." oninput="render()">
+<button class="btn-add" onclick="anadirAlumno()">Añadir norma</button>
+<p id="contador"></p>
+<div id="lista"></div>
+
+<!-- VENTANA PARA PONER EL MOTIVO -->
+<div id="modal" class="modal">
+  <div class="caja">
+    <h3 style="margin:0 0 8px">Nuevo parte para <span id="nombreModal"></span></h3>
+    <p id="fechaAuto" style="font-size:13px;color:#555"></p>
+    <label><b>¿Por qué es el parte?</b></label>
+    <textarea id="motivoInput" placeholder="Ej: Ha interrumpido la clase 3 veces..."></textarea>
+    <div class="row" style="margin-top:10px">
+      <button onclick="cerrarModal()" style="flex:1;background:#e5e7eb">Cancelar</button>
+      <button onclick="guardarParte()" style="flex:1;background:#ef4444;color:white;font-weight:bold">Guardar parte</button>
+    </div>
+  </div>
 </div>
-</div>
-<div id="app" class="hidden">
-<div class="search"><input id="buscar" placeholder="🔍 Buscar por nombre..." oninput="cargar()"></div>
-<div class="wrap">
-<div class="card">
-<h3>➕ Añadir nombre</h3>
-<input id="nombre" placeholder="Nombre Ej: Lucía García">
-<input id="curso" placeholder="Curso Ej: 3A">
-<button class="btn-primary" onclick="addNombre()">+ Añadir nombre</button>
-</div>
-<div class="card">
-<h3>📜 Normativa</h3>
-<div id="normas"></div>
-<input id="nuevaNorma" placeholder="Nueva norma Ej: 3 partes = sin recreo">
-<button class="btn-dark" onclick="addNorma()">Añadir norma</button>
-</div>
-<div style="display:flex;justify-content:space-between;align-items:center">
-<h3 style="margin:0">👨‍🎓 Nombres</h3>
-<span id="total" class="small"></span>
-</div>
-<div id="lista" style="margin-top:10px"></div>
-<button class="btn-light" onclick="cargar()">🔄 Actualizar</button>
-<p class="small" style="text-align:center">Versión 2.1 • Cuadrante</p>
-</div>
-</div>
+
 <script>
-const SUPABASE_URL = "https://semoeiilmmzfjgzqiscp.supabase.co";
-const SUPABASE_KEY = "sb_publishable_SDNhqpqi0hGgJXxR1rpM2g_I6Jm1NWr";
-const CLAVE = "1";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-function entrar(){
-  if(document.getElementById('pass').value === CLAVE){
-    document.getElementById('login').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    cargar();
-  } else alert('Clave incorrecta');
+let alumnos = JSON.parse(localStorage.getItem('partes_v2') || '[]');
+let alumnoActual = null;
+
+if(alumnos.length===0){
+  alumnos = [
+    {nombre:'Erika', curso:'10 años', partes:[{fecha:'08/11/2026', dia:'Domingo', hora:'18:00', motivo:'Ejemplo de parte'}]},
+    {nombre:'Gissela', curso:'16 años', partes:[]}
+  ];
+  // Para que en tu caso empiece en 4 y 2 como en la foto, descomenta esto si quieres, si no déjalo en 0
+  // Erika ya tiene 1 de ejemplo, añade el resto si quieres
+  guardar();
 }
-async function cargar(){
-  let q = document.getElementById('buscar') ? document.getElementById('buscar').value.toLowerCase() : '';
-  let {data: alumnos, error} = await sb.from('alumnos').select('*').order('nombre');
-  let {data: normas} = await sb.from('normas').select('*').order('id');
-  if(error){ alert('Error conectando con la base de datos.'); return; }
-  if(!alumnos) alumnos=[]; if(!normas) normas=[];
-  if(q) alumnos = alumnos.filter(a=> (a.nombre||'').toLowerCase().includes(q) || (a.curso||'').toLowerCase().includes(q));
-  document.getElementById('total').textContent = alumnos.length + ' nombres';
-  document.getElementById('normas').innerHTML = normas.map(n=>`<div class="norma"><span>• ${n.texto}</span><button onclick="delNorma(${n.id})">Borrar</button></div>`).join('');
-  if(alumnos.length===0){
-    document.getElementById('lista').innerHTML = '<div class="card" style="text-align:center"><p>Sin nombres todavía.<br><span class="small">Añade el primero arriba 👆</span></p></div>';
-    return;
+
+function guardar(){ localStorage.setItem('partes_v2', JSON.stringify(alumnos)); }
+
+function anadirAlumno(){
+  let n = prompt('Nombre del alumno:');
+  if(!n) return;
+  let c = prompt('Curso / edad:','');
+  alumnos.push({nombre:n, curso:c, partes:[]});
+  guardar(); render();
+}
+
+function abrirModal(i){
+  alumnoActual = i;
+  let ahora = new Date();
+  let dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  let textoFecha = dias[ahora.getDay()] + ' ' + ahora.toLocaleDateString('es-ES') + ' - ' + ahora.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('nombreModal').innerText = alumnos[i].nombre;
+  document.getElementById('fechaAuto').innerText = textoFecha;
+  document.getElementById('motivoInput').value = '';
+  document.getElementById('modal').classList.add('show');
+  setTimeout(()=>document.getElementById('motivoInput').focus(),100);
+}
+function cerrarModal(){ document.getElementById('modal').classList.remove('show'); }
+
+function guardarParte(){
+  let motivo = document.getElementById('motivoInput').value.trim();
+  if(!motivo){ alert('Pon el motivo del parte'); return; }
+  let ahora = new Date();
+  let dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  alumnos[alumnoActual].partes.push({
+    dia: dias[ahora.getDay()],
+    fecha: ahora.toLocaleDateString('es-ES'),
+    hora: ahora.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
+    motivo: motivo
+  });
+  guardar(); cerrarModal(); render();
+}
+
+function quitarParte(i){
+  if(alumnos[i].partes.length===0) return;
+  if(confirm('¿Quitar el último parte de '+alumnos[i].nombre+'?')){
+    alumnos[i].partes.pop(); guardar(); render();
   }
-  document.getElementById('lista').innerHTML = alumnos.map(a=>{
-    let partes = a.partes||0;
-    let pct = Math.min(100, (partes/5)*100);
-    let sin = a.privilegios !== 'TIENE';
-    return `
-    <div class="card" style="${sin ? 'border:2px solid #ef4444' : ''}">
-      <div class="top-row">
-        <div><div class="alumno-nombre">${a.nombre}</div><span class="small">Curso: ${a.curso||'-'}</span></div>
-        <span class="badge ${sin?'no':'ok'}">${sin?'⛔ SIN PRIVILEGIOS':'✅ TIENE'}</span>
-      </div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-top:8px">
-        <span class="partes-num">${partes}</span><span style="font-weight:700;color:#64748b">/ 5 partes</span>
-      </div>
-      <div class="progress"><div style="width:${pct}%"></div></div>
-      <div class="small">${partes===0 && !sin ?'Sin partes, ¡muy bien!': sin ? 'Está SIN PRIVILEGIOS. Pulsa Devolver privilegios.' : partes===4 ? '⚠️ ¡Cuidado! Le falta 1 para quedarse sin privilegios' : partes + ' partes acumuladas'}</div>
-      <div class="row">
-        <button class="btn-danger" onclick="cambiarPartes(${a.id},${partes},1,'${a.privilegios}')">+1 Parte</button>
-        <button class="btn-green" onclick="cambiarPartes(${a.id},${partes},-1,'${a.privilegios}')">-1 Parte</button>
-      </div>
-      ${sin ? `<button class="btn-blue" onclick="devolverPrivilegios(${a.id})">✅ Devolver privilegios</button>` : ''}
-      <button class="btn-light" onclick="borrar(${a.id})">🗑️ Borrar nombre</button>
-    </div>`}).join('');
 }
-async function cambiarPartes(id, actual, delta, privActual){
-  if(privActual !== 'TIENE'){ alert('Ya está SIN PRIVILEGIOS. Pulsa Devolver privilegios.'); return; }
-  let nuevo = Math.max(0, actual + delta);
-  let priv = 'TIENE';
-  if(nuevo >= 5){ nuevo = 0; priv = 'SIN PRIVILEGIOS'; alert('¡Ha llegado a 5 partes! Se queda SIN PRIVILEGIOS y el contador vuelve a 0'); }
-  await sb.from('alumnos').update({partes:nuevo, privilegios:priv}).eq('id', id);
-  cargar();
+function borrarAlumno(i){
+  if(confirm('¿Borrar a '+alumnos[i].nombre+'?')){ alumnos.splice(i,1); guardar(); render(); }
 }
-async function devolverPrivilegios(id){
-  if(!confirm('¿Devolver privilegios?')) return;
-  await sb.from('alumnos').update({privilegios:'TIENE', partes:0}).eq('id', id);
-  cargar();
+function toggleHist(i){
+  let el = document.getElementById('hist-'+i);
+  el.style.display = el.style.display==='none' ? 'block' : 'none';
 }
-async function addNombre(){
-  let nombre=document.getElementById('nombre').value.trim();
-  let curso=document.getElementById('curso').value.trim();
-  if(!nombre) return alert('Pon el nombre');
-  await sb.from('alumnos').insert({nombre, curso, partes:0, privilegios:'TIENE'});
-  document.getElementById('nombre').value=''; document.getElementById('curso').value='';
-  cargar();
+
+function render(){
+  let filtro = document.getElementById('buscador').value.toLowerCase();
+  let html = '';
+  let filtrados = alumnos.filter(a=>a.nombre.toLowerCase().includes(filtro));
+  document.getElementById('contador').innerText = '🧑‍🎓 ' + filtrados.length + ' nombres';
+  filtrados.forEach((a, idx)=>{
+    let i = alumnos.indexOf(a);
+    let total = a.partes.length;
+    let pct = Math.min(total/5*100,100);
+    let aviso = total>=4 ? '<p>⚠️ ¡Cuidado! Le falta '+(5-total)+' para quedarse sin privilegios</p>' : total>0 ? `<p>${total} partes acumuladas</p>` : '<p>Sin partes</p>';
+    let hist = a.partes.map(p=>`<div class="parte-item"><div class="fecha">${p.dia} ${p.fecha} - ${p.hora}</div><div class="motivo">${p.motivo}</div></div>`).reverse().join('') || 'Sin partes todavía';
+    html += `<div class="card">
+      <div style="display:flex;justify-content:space-between"><div><b style="font-size:19px">${a.nombre}</b><br><small>Curso: ${a.curso}</small></div><div>✅ TIENE</div></div>
+      <div style="font-size:32px;font-weight:bold">${total} <span style="font-size:18px">/ 5 partes</span></div>
+      <div class="barra"><div class="relleno" style="width:${pct}%"></div></div>
+      ${aviso}
+      <div class="row"><button class="mas" onclick="abrirModal(${i})">+1 Parte</button><button class="menos" onclick="quitarParte(${i})">-1 Parte</button></div>
+      <button class="btn-hist" onclick="toggleHist(${i})">📋 Ver historial (${total})</button>
+      <div id="hist-${i}" class="historial" style="display:none">${hist}</div>
+      <button class="borrar" onclick="borrarAlumno(${i})">🗑️ Borrar nombre</button>
+    </div>`;
+  });
+  document.getElementById('lista').innerHTML = html;
 }
-async function borrar(id){ if(confirm('¿Borrar este nombre?')){ await sb.from('alumnos').delete().eq('id',id); cargar(); } }
-async function addNorma(){
-  let t=document.getElementById('nuevaNorma').value.trim();
-  if(!t) return;
-  await sb.from('normas').insert({texto:t});
-  document.getElementById('nuevaNorma').value=''; cargar();
-}
-async function delNorma(id){ await sb.from('normas').delete().eq('id',id); cargar(); }
+render();
 </script>
 </body>
 </html>
