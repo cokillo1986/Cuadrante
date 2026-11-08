@@ -29,27 +29,48 @@
   .parte-item{border-bottom:1px solid #e5e7eb;padding:8px 0}
   .parte-item:last-child{border:none}
   .fecha{font-weight:bold;font-size:13px;color:#444}
+  .motivo-edit{color:#2563eb;text-decoration:underline;cursor:pointer}
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:99}
   .modal.show{display:flex}
   .caja{background:white;color:#111;width:100%;max-width:500px;border-radius:20px 20px 0 0;padding:18px}
   textarea{width:100%;height:90px;border-radius:12px;padding:12px;font-size:15px;border:1px solid #ccc;font-family:sans-serif}
   .btn-cancel{flex:1;padding:12px;border:none;border-radius:12px;background:#e5e7eb}
   .btn-guardar{flex:1;padding:12px;border:none;border-radius:12px;background:#ef4444;color:white;font-weight:bold}
+  /* PANTALLA DE CLAVE */
+  #pantalla-clave{position:fixed;inset:0;background:#14171f;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:200;text-align:center}
+  #pantalla-clave h1{font-size:28px;margin:0 0 6px}
+  #pantalla-clave p{color:#9aa0ad;margin:0 0 20px}
+  #input-clave{width:100%;max-width:320px;padding:16px;border-radius:14px;border:none;font-size:22px;text-align:center;background:white;color:#111;letter-spacing:8px}
+  #btn-clave{width:100%;max-width:320px;padding:16px;border:none;border-radius:14px;background:#ef4444;color:white;font-weight:bold;font-size:17px;margin-top:12px}
+  #error-clave{color:#ff6b6b;margin-top:10px;display:none}
+  #app{display:none}
 </style>
 </head>
 <body>
 
-<input id="buscador" placeholder="🔍 Buscar por nombre..." oninput="render()">
-<button class="btn-norma" onclick="anadirAlumno()">+ Añadir nombre</button>
-<div id="contador"></div>
-<div id="lista"></div>
+<!-- CLAVE DE ACCESO -->
+<div id="pantalla-clave">
+  <h1>🔒 Control de Partes</h1>
+  <p>Introduce la clave de acceso</p>
+  <input id="input-clave" type="password" inputmode="numeric" placeholder="••••" autocomplete="off">
+  <button id="btn-clave" onclick="comprobarClave()">Entrar</button>
+  <div id="error-clave">❌ Clave incorrecta</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <input id="buscador" placeholder="🔍 Buscar por nombre..." oninput="render()">
+  <button class="btn-norma" onclick="anadirAlumno()">+ Añadir nombre</button>
+  <div id="contador"></div>
+  <div id="lista"></div>
+</div>
 
 <div id="modal" class="modal">
   <div class="caja">
     <h3 style="margin:0 0 6px">Nuevo parte para <span id="nombreModal"></span></h3>
     <p id="fechaAuto" style="font-size:13px;color:#555;margin:0 0 10px"></p>
     <label><b>¿Por qué es el parte?</b></label><br><br>
-    <textarea id="motivoInput" placeholder="Ej: Ha pegado a un compañero..."></textarea>
+    <textarea id="motivoInput" placeholder="Escribe tú el motivo..."></textarea>
     <div class="row" style="margin-top:10px">
       <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
       <button class="btn-guardar" onclick="guardarParte()">Guardar parte</button>
@@ -58,32 +79,55 @@
 </div>
 
 <script>
-let alumnos = JSON.parse(localStorage.getItem('partes_final_v1') || '[]');
+const CLAVE_ACCESO = "1";
+
+function comprobarClave(){
+  let v = document.getElementById('input-clave').value.trim();
+  if(v === CLAVE_ACCESO){
+    document.getElementById('pantalla-clave').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    sessionStorage.setItem('acceso_partes','si');
+    render();
+  } else {
+    document.getElementById('error-clave').style.display = 'block';
+    document.getElementById('input-clave').value = '';
+    document.getElementById('input-clave').focus();
+  }
+}
+// Enter para entrar
+document.getElementById('input-clave').addEventListener('keydown', function(e){ if(e.key==='Enter') comprobarClave(); });
+// Si ya entró en esta sesión, no pedir clave otra vez
+if(sessionStorage.getItem('acceso_partes')==='si'){
+  document.getElementById('pantalla-clave').style.display='none';
+  document.getElementById('app').style.display='block';
+}
+
+let alumnos = JSON.parse(localStorage.getItem('partes_final_v2') || '[]');
 let alumnoActual = null;
 
 if(alumnos.length===0){
   alumnos = [
     {nombre:'Erika', curso:'10 años', partes:[
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ha interrumpido la clase'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:10', motivo:'No ha hecho los deberes'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:20', motivo:'Ha pegado a un compañero'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:30', motivo:'No ha respetado el turno'}
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:''},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:10', motivo:''},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:20', motivo:''},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:30', motivo:''}
     ]},
     {nombre:'Gissela', curso:'16 años', partes:[
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ha llegado tarde'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:15', motivo:'Ha usado el móvil en clase'}
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:''},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:15', motivo:''}
     ]},
     {nombre:'José', curso:'10 años', partes:[
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ha interrumpido la clase'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:10', motivo:'No ha hecho los deberes'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:20', motivo:'Ha pegado a un compañero'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:30', motivo:'No ha respetado el turno'}
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:''},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:10', motivo:''},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:20', motivo:''},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:30', motivo:''}
     ]}
   ];
   guardar();
 }
 
-function guardar(){ localStorage.setItem('partes_final_v1', JSON.stringify(alumnos)); }
+function guardar(){ localStorage.setItem('partes_final_v2', JSON.stringify(alumnos)); }
 
 function anadirAlumno(){
   let n = prompt('Nombre:');
@@ -108,7 +152,6 @@ function cerrarModal(){ document.getElementById('modal').classList.remove('show'
 
 function guardarParte(){
   let motivo = document.getElementById('motivoInput').value.trim();
-  if(!motivo){ alert('Pon el motivo del parte'); return; }
   let ahora = new Date();
   let dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   alumnos[alumnoActual].partes.push({
@@ -118,6 +161,15 @@ function guardarParte(){
     motivo: motivo
   });
   guardar(); cerrarModal(); render();
+}
+
+function editarMotivo(i, indiceReal){
+  let actual = alumnos[i].partes[indiceReal].motivo || '';
+  let nuevo = prompt('Escribe el motivo del parte:', actual);
+  if(nuevo===null) return;
+  alumnos[i].partes[indiceReal].motivo = nuevo.trim();
+  guardar(); render();
+  setTimeout(()=>{ let el=document.getElementById('hist-'+i); if(el) el.style.display='block'; },50);
 }
 
 function quitarParte(i){
@@ -144,7 +196,10 @@ function render(){
     let total = a.partes.length;
     let pct = Math.min(total/5*100,100);
     let aviso = total>=4 ? `<div class="aviso">⚠️ ¡Cuidado! Le falta ${5-total} para quedarse sin privilegios</div>` : total>0 ? `<div class="aviso">${total} partes acumuladas</div>` : `<div class="aviso">Sin partes</div>`;
-    let hist = a.partes.map(p=>`<div class="parte-item"><div class="fecha">${p.dia} ${p.fecha} - ${p.hora}</div><div>${p.motivo}</div></div>`).reverse().join('') || 'Sin partes todavía';
+    let hist = a.partes.map((p, idxReal)=>{
+      let textoMotivo = p.motivo ? p.motivo : 'Sin motivo - pulsa para ponerlo';
+      return `<div class="parte-item"><div class="fecha">${p.dia} ${p.fecha} - ${p.hora}</div><div class="motivo-edit" onclick="editarMotivo(${i}, ${idxReal})">${textoMotivo} ✏️</div></div>`;
+    }).reverse().join('') || 'Sin partes todavía';
     html += `<div class="card">
       <div class="top"><div><div class="nombre">${a.nombre}</div><div class="curso">Curso: ${a.curso}</div></div><div class="tiene">✅ TIENE</div></div>
       <div class="num">${total} <span>/ 5 partes</span></div>
