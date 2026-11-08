@@ -6,71 +6,86 @@
 <title>Control de Partes</title>
 <style>
   *{box-sizing:border-box}
-  body{font-family:sans-serif;background:#0f1115;color:white;padding:12px;margin:0}
-  input,button{padding:12px;border-radius:12px;border:none;font-size:15px}
-  input{width:100%;background:#1e2230;color:white;margin-bottom:8px}
-  .btn-add{background:#0a0a0a;color:white;width:100%;font-weight:bold;border:1px solid #333}
+  body{font-family:sans-serif;background:#14171f;color:white;padding:12px;margin:0;padding-bottom:30px}
+  #buscador{width:100%;padding:13px;border-radius:14px;border:none;font-size:15px;background:white;color:#111;margin-bottom:10px}
+  .btn-norma{width:100%;padding:14px;border-radius:14px;border:none;background:#0b0d12;color:white;font-weight:bold;font-size:16px;margin-bottom:6px}
+  #contador{text-align:right;font-size:13px;color:#9aa0ad;margin:10px 2px}
   .card{background:white;color:#111;border-radius:20px;padding:16px;margin:14px 0}
+  .top{display:flex;justify-content:space-between;align-items:flex-start}
+  .nombre{font-size:19px;font-weight:bold}
+  .curso{font-size:13px;color:#555}
+  .tiene{background:#e6f7e9;color:#1a7a2e;padding:5px 12px;border-radius:20px;font-size:13px;font-weight:bold}
+  .num{font-size:36px;font-weight:900;line-height:1;margin:8px 0 4px}
+  .num span{font-size:18px;font-weight:400}
   .barra{height:12px;background:#e5e7eb;border-radius:20px;overflow:hidden;margin:8px 0}
   .relleno{height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444)}
+  .aviso{font-size:14px;margin:8px 0}
   .row{display:flex;gap:8px}
-  .mas{flex:1;background:#ef4444;color:white;font-weight:bold}
-  .menos{flex:1;background:#16a34a;color:white;font-weight:bold}
-  .borrar{width:100%;background:#eef2f7;margin-top:8px}
-  .historial{margin-top:10px;background:#f8fafc;border-radius:12px;padding:10px;font-size:14px}
+  .mas{flex:1;padding:12px;border:none;border-radius:12px;background:#ef4444;color:white;font-weight:bold;font-size:15px}
+  .menos{flex:1;padding:12px;border:none;border-radius:12px;background:#16a34a;color:white;font-weight:bold;font-size:15px}
+  .borrar{width:100%;padding:12px;border:none;border-radius:12px;background:#eef2f7;margin-top:8px;font-size:15px}
+  .ver-hist{width:100%;padding:11px;border:none;border-radius:12px;background:#111;color:white;margin-top:8px;font-size:14px}
+  .historial{margin-top:10px;background:#f8fafc;border-radius:12px;padding:10px;font-size:14px;display:none}
   .parte-item{border-bottom:1px solid #e5e7eb;padding:8px 0}
   .parte-item:last-child{border:none}
   .fecha{font-weight:bold;font-size:13px;color:#444}
-  .motivo{margin-top:2px}
-  .btn-hist{background:#111;color:white;width:100%;margin-top:8px}
-  /* Modal */
+  /* Modal motivo - lo único nuevo */
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:99}
   .modal.show{display:flex}
   .caja{background:white;color:#111;width:100%;max-width:500px;border-radius:20px 20px 0 0;padding:18px}
-  textarea{width:100%;height:90px;border-radius:12px;padding:12px;font-size:15px;border:1px solid #ccc}
+  textarea{width:100%;height:90px;border-radius:12px;padding:12px;font-size:15px;border:1px solid #ccc;font-family:sans-serif}
+  .btn-cancel{flex:1;padding:12px;border:none;border-radius:12px;background:#e5e7eb}
+  .btn-guardar{flex:1;padding:12px;border:none;border-radius:12px;background:#ef4444;color:white;font-weight:bold}
 </style>
 </head>
 <body>
 
 <input id="buscador" placeholder="🔍 Buscar por nombre..." oninput="render()">
-<button class="btn-add" onclick="anadirAlumno()">Añadir norma</button>
-<p id="contador"></p>
+<button class="btn-norma" onclick="anadirAlumno()">Añadir norma</button>
+<div id="contador"></div>
 <div id="lista"></div>
 
-<!-- VENTANA PARA PONER EL MOTIVO -->
+<!-- SOLO ESTO ES NUEVO: ventana para el motivo -->
 <div id="modal" class="modal">
   <div class="caja">
-    <h3 style="margin:0 0 8px">Nuevo parte para <span id="nombreModal"></span></h3>
-    <p id="fechaAuto" style="font-size:13px;color:#555"></p>
-    <label><b>¿Por qué es el parte?</b></label>
-    <textarea id="motivoInput" placeholder="Ej: Ha interrumpido la clase 3 veces..."></textarea>
+    <h3 style="margin:0 0 6px">Nuevo parte para <span id="nombreModal"></span></h3>
+    <p id="fechaAuto" style="font-size:13px;color:#555;margin:0 0 10px"></p>
+    <label><b>¿Por qué es el parte?</b></label><br><br>
+    <textarea id="motivoInput" placeholder="Ej: Ha pegado a un compañero..."></textarea>
     <div class="row" style="margin-top:10px">
-      <button onclick="cerrarModal()" style="flex:1;background:#e5e7eb">Cancelar</button>
-      <button onclick="guardarParte()" style="flex:1;background:#ef4444;color:white;font-weight:bold">Guardar parte</button>
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-guardar" onclick="guardarParte()">Guardar parte</button>
     </div>
   </div>
 </div>
 
 <script>
-let alumnos = JSON.parse(localStorage.getItem('partes_v2') || '[]');
+let alumnos = JSON.parse(localStorage.getItem('partes_app') || '[]');
 let alumnoActual = null;
 
 if(alumnos.length===0){
+  // Para que te salga igual que en la foto la primera vez
   alumnos = [
-    {nombre:'Erika', curso:'10 años', partes:[{fecha:'08/11/2026', dia:'Domingo', hora:'18:00', motivo:'Ejemplo de parte'}]},
-    {nombre:'Gissela', curso:'16 años', partes:[]}
+    {nombre:'Erika', curso:'10 años', partes:[
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'}
+    ]},
+    {nombre:'Gissela', curso:'16 años', partes:[
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'}
+    ]}
   ];
-  // Para que en tu caso empiece en 4 y 2 como en la foto, descomenta esto si quieres, si no déjalo en 0
-  // Erika ya tiene 1 de ejemplo, añade el resto si quieres
   guardar();
 }
 
-function guardar(){ localStorage.setItem('partes_v2', JSON.stringify(alumnos)); }
+function guardar(){ localStorage.setItem('partes_app', JSON.stringify(alumnos)); }
 
 function anadirAlumno(){
-  let n = prompt('Nombre del alumno:');
+  let n = prompt('Nombre:');
   if(!n) return;
-  let c = prompt('Curso / edad:','');
+  let c = prompt('Curso:','');
   alumnos.push({nombre:n, curso:c, partes:[]});
   guardar(); render();
 }
@@ -79,9 +94,9 @@ function abrirModal(i){
   alumnoActual = i;
   let ahora = new Date();
   let dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-  let textoFecha = dias[ahora.getDay()] + ' ' + ahora.toLocaleDateString('es-ES') + ' - ' + ahora.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  let texto = dias[ahora.getDay()] + ' ' + ahora.toLocaleDateString('es-ES') + ' - ' + ahora.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('nombreModal').innerText = alumnos[i].nombre;
-  document.getElementById('fechaAuto').innerText = textoFecha;
+  document.getElementById('fechaAuto').innerText = texto;
   document.getElementById('motivoInput').value = '';
   document.getElementById('modal').classList.add('show');
   setTimeout(()=>document.getElementById('motivoInput').focus(),100);
@@ -118,23 +133,23 @@ function toggleHist(i){
 
 function render(){
   let filtro = document.getElementById('buscador').value.toLowerCase();
-  let html = '';
   let filtrados = alumnos.filter(a=>a.nombre.toLowerCase().includes(filtro));
-  document.getElementById('contador').innerText = '🧑‍🎓 ' + filtrados.length + ' nombres';
-  filtrados.forEach((a, idx)=>{
+  document.getElementById('contador').innerHTML = '🧑‍🎓 &nbsp; ' + filtrados.length + ' nombres';
+  let html = '';
+  filtrados.forEach(a=>{
     let i = alumnos.indexOf(a);
     let total = a.partes.length;
     let pct = Math.min(total/5*100,100);
-    let aviso = total>=4 ? '<p>⚠️ ¡Cuidado! Le falta '+(5-total)+' para quedarse sin privilegios</p>' : total>0 ? `<p>${total} partes acumuladas</p>` : '<p>Sin partes</p>';
-    let hist = a.partes.map(p=>`<div class="parte-item"><div class="fecha">${p.dia} ${p.fecha} - ${p.hora}</div><div class="motivo">${p.motivo}</div></div>`).reverse().join('') || 'Sin partes todavía';
+    let aviso = total>=4 ? `<div class="aviso">⚠️ ¡Cuidado! Le falta ${5-total} para quedarse sin privilegios</div>` : total>0 ? `<div class="aviso">${total} partes acumuladas</div>` : `<div class="aviso">Sin partes</div>`;
+    let hist = a.partes.map(p=>`<div class="parte-item"><div class="fecha">${p.dia} ${p.fecha} - ${p.hora}</div><div>${p.motivo}</div></div>`).reverse().join('') || 'Sin partes todavía';
     html += `<div class="card">
-      <div style="display:flex;justify-content:space-between"><div><b style="font-size:19px">${a.nombre}</b><br><small>Curso: ${a.curso}</small></div><div>✅ TIENE</div></div>
-      <div style="font-size:32px;font-weight:bold">${total} <span style="font-size:18px">/ 5 partes</span></div>
+      <div class="top"><div><div class="nombre">${a.nombre}</div><div class="curso">Curso: ${a.curso}</div></div><div class="tiene">✅ TIENE</div></div>
+      <div class="num">${total} <span>/ 5 partes</span></div>
       <div class="barra"><div class="relleno" style="width:${pct}%"></div></div>
       ${aviso}
       <div class="row"><button class="mas" onclick="abrirModal(${i})">+1 Parte</button><button class="menos" onclick="quitarParte(${i})">-1 Parte</button></div>
-      <button class="btn-hist" onclick="toggleHist(${i})">📋 Ver historial (${total})</button>
-      <div id="hist-${i}" class="historial" style="display:none">${hist}</div>
+      <button class="ver-hist" onclick="toggleHist(${i})">📋 Ver historial (${total})</button>
+      <div id="hist-${i}" class="historial">${hist}</div>
       <button class="borrar" onclick="borrarAlumno(${i})">🗑️ Borrar nombre</button>
     </div>`;
   });
