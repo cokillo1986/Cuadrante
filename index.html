@@ -8,7 +8,7 @@
   *{box-sizing:border-box}
   body{font-family:sans-serif;background:#14171f;color:white;padding:12px;margin:0;padding-bottom:30px}
   #buscador{width:100%;padding:13px;border-radius:14px;border:none;font-size:15px;background:white;color:#111;margin-bottom:10px}
-  .btn-norma{width:100%;padding:14px;border-radius:14px;border:none;background:#0b0d12;color:white;font-weight:bold;font-size:16px;margin-bottom:6px}
+  .btn-norma{width:100%;padding:14px;border-radius:14px;border:none;background:#0b0d12;color:white;font-weight:bold;font-size:16px;margin-bottom:6px;border:1px solid #333}
   #contador{text-align:right;font-size:13px;color:#9aa0ad;margin:10px 2px}
   .card{background:white;color:#111;border-radius:20px;padding:16px;margin:14px 0}
   .top{display:flex;justify-content:space-between;align-items:flex-start}
@@ -29,7 +29,6 @@
   .parte-item{border-bottom:1px solid #e5e7eb;padding:8px 0}
   .parte-item:last-child{border:none}
   .fecha{font-weight:bold;font-size:13px;color:#444}
-  /* Modal motivo - lo único nuevo */
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:99}
   .modal.show{display:flex}
   .caja{background:white;color:#111;width:100%;max-width:500px;border-radius:20px 20px 0 0;padding:18px}
@@ -41,11 +40,10 @@
 <body>
 
 <input id="buscador" placeholder="🔍 Buscar por nombre..." oninput="render()">
-<button class="btn-norma" onclick="anadirAlumno()">Añadir norma</button>
+<button class="btn-norma" onclick="anadirAlumno()">+ Añadir nombre</button>
 <div id="contador"></div>
 <div id="lista"></div>
 
-<!-- SOLO ESTO ES NUEVO: ventana para el motivo -->
 <div id="modal" class="modal">
   <div class="caja">
     <h3 style="margin:0 0 6px">Nuevo parte para <span id="nombreModal"></span></h3>
@@ -60,27 +58,32 @@
 </div>
 
 <script>
-let alumnos = JSON.parse(localStorage.getItem('partes_app') || '[]');
+let alumnos = JSON.parse(localStorage.getItem('partes_final_v1') || '[]');
 let alumnoActual = null;
 
 if(alumnos.length===0){
-  // Para que te salga igual que en la foto la primera vez
   alumnos = [
     {nombre:'Erika', curso:'10 años', partes:[
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'}
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ha interrumpido la clase'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:10', motivo:'No ha hecho los deberes'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:20', motivo:'Ha pegado a un compañero'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:30', motivo:'No ha respetado el turno'}
     ]},
     {nombre:'Gissela', curso:'16 años', partes:[
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ejemplo - bórralo con -1 Parte'}
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ha llegado tarde'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:15', motivo:'Ha usado el móvil en clase'}
+    ]},
+    {nombre:'José', curso:'10 años', partes:[
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:'Ha interrumpido la clase'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:10', motivo:'No ha hecho los deberes'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:20', motivo:'Ha pegado a un compañero'},
+      {dia:'Domingo', fecha:'08/11/2026', hora:'18:30', motivo:'No ha respetado el turno'}
     ]}
   ];
   guardar();
 }
 
-function guardar(){ localStorage.setItem('partes_app', JSON.stringify(alumnos)); }
+function guardar(){ localStorage.setItem('partes_final_v1', JSON.stringify(alumnos)); }
 
 function anadirAlumno(){
   let n = prompt('Nombre:');
