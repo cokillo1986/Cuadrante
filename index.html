@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Control de Partes</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *{box-sizing:border-box}
   body{font-family:sans-serif;background:#14171f;color:white;padding:12px;margin:0;padding-bottom:30px}
@@ -36,7 +37,6 @@
   textarea{width:100%;height:90px;border-radius:12px;padding:12px;font-size:15px;border:1px solid #ccc;font-family:sans-serif}
   .btn-cancel{flex:1;padding:12px;border:none;border-radius:12px;background:#e5e7eb}
   .btn-guardar{flex:1;padding:12px;border:none;border-radius:12px;background:#ef4444;color:white;font-weight:bold}
-  /* PANTALLA DE CLAVE */
   #pantalla-clave{position:fixed;inset:0;background:#14171f;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:200;text-align:center}
   #pantalla-clave h1{font-size:28px;margin:0 0 6px}
   #pantalla-clave p{color:#9aa0ad;margin:0 0 20px}
@@ -44,11 +44,12 @@
   #btn-clave{width:100%;max-width:320px;padding:16px;border:none;border-radius:14px;background:#ef4444;color:white;font-weight:bold;font-size:17px;margin-top:12px}
   #error-clave{color:#ff6b6b;margin-top:10px;display:none}
   #app{display:none}
+  #estado{font-size:12px;color:#9aa0ad;text-align:center;margin-bottom:8px}
+  #estado.ok{color:#4ade80}
 </style>
 </head>
 <body>
 
-<!-- CLAVE DE ACCESO -->
 <div id="pantalla-clave">
   <h1>🔒 Control de Partes</h1>
   <p>Introduce la clave de acceso</p>
@@ -57,8 +58,8 @@
   <div id="error-clave">❌ Clave incorrecta</div>
 </div>
 
-<!-- APP -->
 <div id="app">
+  <div id="estado">⏳ Conectando con la base de datos...</div>
   <input id="buscador" placeholder="🔍 Buscar por nombre..." oninput="render()">
   <button class="btn-norma" onclick="anadirAlumno()">+ Añadir nombre</button>
   <div id="contador"></div>
@@ -80,6 +81,9 @@
 
 <script>
 const CLAVE_ACCESO = "1";
+const SUPABASE_URL = "https://semoeiilmmzfjgzqiscp.supabase.co";
+const SUPABASE_KEY = "sb_publishable_SDNhqpqi0hGgJXxR1rpM2g_I6Jm1NWr";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function comprobarClave(){
   let v = document.getElementById('input-clave').value.trim();
@@ -94,40 +98,89 @@ function comprobarClave(){
     document.getElementById('input-clave').focus();
   }
 }
-// Enter para entrar
 document.getElementById('input-clave').addEventListener('keydown', function(e){ if(e.key==='Enter') comprobarClave(); });
-// Si ya entró en esta sesión, no pedir clave otra vez
 if(sessionStorage.getItem('acceso_partes')==='si'){
   document.getElementById('pantalla-clave').style.display='none';
   document.getElementById('app').style.display='block';
 }
 
-let alumnos = JSON.parse(localStorage.getItem('partes_final_v2') || '[]');
+let alumnos = [];
 let alumnoActual = null;
+let guardando = false;
+let ultimaVersion = "";
 
-if(alumnos.length===0){
-  alumnos = [
-    {nombre:'Erika', curso:'10 años', partes:[
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:''},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:10', motivo:''},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:20', motivo:''},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:30', motivo:''}
-    ]},
-    {nombre:'Gissela', curso:'16 años', partes:[
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:''},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:15', motivo:''}
-    ]},
-    {nombre:'José', curso:'10 años', partes:[
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:''},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:10', motivo:''},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:20', motivo:''},
-      {dia:'Domingo', fecha:'08/11/2026', hora:'18:30', motivo:''}
-    ]}
-  ];
-  guardar();
+function setEstado(ok, texto){
+  let el = document.getElementById('estado');
+  if(el){ el.textContent = texto; el.className = ok ? 'ok' : ''; }
 }
 
-function guardar(){ localStorage.setItem('partes_final_v2', JSON.stringify(alumnos)); }
+async function cargar(){
+  try{
+    let {data, error} = await sb.from('partes').select('datos').eq('id',1).single();
+    if(error) throw error;
+    let nuevos = data?.datos || [];
+    if(JSON.stringify(nuevos) !== ultimaVersion){
+      alumnos = nuevos;
+      ultimaVersion = JSON.stringify(nuevos);
+      localStorage.setItem('partes_final_v2', JSON.stringify(alumnos));
+      render();
+    }
+    setEstado(true, "✅ Conectado - se actualiza solo para los dos");
+  }catch(e){
+    // Si falla internet, usar lo guardado en el móvil
+    alumnos = JSON.parse(localStorage.getItem('partes_final_v2') || '[]');
+    setEstado(false, "⚠️ Sin conexión, usando datos guardados en este móvil");
+    render();
+  }
+}
+
+async function guardar(){
+  localStorage.setItem('partes_final_v2', JSON.stringify(alumnos));
+  ultimaVersion = JSON.stringify(alumnos);
+  if(guardando) return;
+  guardando = true;
+  try{
+    let {error} = await sb.from('partes').upsert({id:1, datos: alumnos, updated_at: new Date().toISOString()});
+    if(error) throw error;
+    setEstado(true, "✅ Guardado - tu pareja ya lo ve");
+  }catch(e){
+    setEstado(false, "⚠️ Guardado solo en este móvil, revisa tu conexión");
+  }
+  guardando = false;
+}
+
+async function inicio(){
+  await cargar();
+  if(alumnos.length===0){
+    alumnos = [
+      {nombre:'Erika', curso:'10 años', partes:[
+        {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:''},
+        {dia:'Domingo', fecha:'08/11/2026', hora:'18:10', motivo:''},
+        {dia:'Domingo', fecha:'08/11/2026', hora:'18:20', motivo:''},
+        {dia:'Domingo', fecha:'08/11/2026', hora:'18:30', motivo:''}
+      ]},
+      {nombre:'Gissela', curso:'16 años', partes:[
+        {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:''},
+        {dia:'Domingo', fecha:'08/11/2026', hora:'18:15', motivo:''}
+      ]},
+      {nombre:'José', curso:'10 años', partes:[
+        {dia:'Domingo', fecha:'08/11/2026', hora:'18:00', motivo:''},
+        {dia:'Domingo', fecha:'08/11/2026', hora:'18:10', motivo:''},
+        {dia:'Domingo', fecha:'08/11/2026', hora:'18:20', motivo:''},
+        {dia:'Domingo', fecha:'08/11/2026', hora:'18:30', motivo:''}
+      ]}
+    ];
+    await guardar();
+    render();
+  }
+  // Revisar cambios de tu pareja cada 3 segundos
+  setInterval(cargar, 3000);
+  // Tiempo real si está activado
+  try{
+    sb.channel('partes-rt').on('postgres_changes',{event:'*',schema:'public',table:'partes'},()=>cargar()).subscribe();
+  }catch(e){}
+}
+inicio();
 
 function anadirAlumno(){
   let n = prompt('Nombre:');
@@ -136,7 +189,6 @@ function anadirAlumno(){
   alumnos.push({nombre:n, curso:c, partes:[]});
   guardar(); render();
 }
-
 function abrirModal(i){
   alumnoActual = i;
   let ahora = new Date();
@@ -149,7 +201,6 @@ function abrirModal(i){
   setTimeout(()=>document.getElementById('motivoInput').focus(),100);
 }
 function cerrarModal(){ document.getElementById('modal').classList.remove('show'); }
-
 function guardarParte(){
   let motivo = document.getElementById('motivoInput').value.trim();
   let ahora = new Date();
@@ -162,7 +213,6 @@ function guardarParte(){
   });
   guardar(); cerrarModal(); render();
 }
-
 function editarMotivo(i, indiceReal){
   let actual = alumnos[i].partes[indiceReal].motivo || '';
   let nuevo = prompt('Escribe el motivo del parte:', actual);
@@ -171,7 +221,6 @@ function editarMotivo(i, indiceReal){
   guardar(); render();
   setTimeout(()=>{ let el=document.getElementById('hist-'+i); if(el) el.style.display='block'; },50);
 }
-
 function quitarParte(i){
   if(alumnos[i].partes.length===0) return;
   if(confirm('¿Quitar el último parte de '+alumnos[i].nombre+'?')){
@@ -185,8 +234,8 @@ function toggleHist(i){
   let el = document.getElementById('hist-'+i);
   el.style.display = el.style.display==='none' ? 'block' : 'none';
 }
-
 function render(){
+  if(!document.getElementById('buscador')) return;
   let filtro = document.getElementById('buscador').value.toLowerCase();
   let filtrados = alumnos.filter(a=>a.nombre.toLowerCase().includes(filtro));
   document.getElementById('contador').innerHTML = '🧑‍🎓 &nbsp; ' + filtrados.length + ' nombres';
@@ -213,7 +262,6 @@ function render(){
   });
   document.getElementById('lista').innerHTML = html;
 }
-render();
 </script>
 </body>
-</html>
+ </html>
