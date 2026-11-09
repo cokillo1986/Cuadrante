@@ -37,15 +37,24 @@
   textarea{width:100%;height:90px;border-radius:12px;padding:12px;font-size:15px;border:1px solid #ccc;font-family:sans-serif}
   .btn-cancel{flex:1;padding:12px;border:none;border-radius:12px;background:#e5e7eb}
   .btn-guardar{flex:1;padding:12px;border:none;border-radius:12px;background:#ef4444;color:white;font-weight:bold}
-  #pantalla-clave{position:fixed;inset:0;background:#14171f;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:200;text-align:center}
+  #pantalla-clave{position:fixed;inset:0;background:#14171f;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:200;text-align:center}
+  #pantalla-clave.show{display:flex}
   #pantalla-clave h1{font-size:28px;margin:0 0 6px}
   #pantalla-clave p{color:#9aa0ad;margin:0 0 20px}
   #input-clave{width:100%;max-width:320px;padding:16px;border-radius:14px;border:none;font-size:22px;text-align:center;background:white;color:#111;letter-spacing:8px}
   #btn-clave{width:100%;max-width:320px;padding:16px;border:none;border-radius:14px;background:#ef4444;color:white;font-weight:bold;font-size:17px;margin-top:12px}
+  #btn-volver{width:100%;max-width:320px;padding:12px;border:none;border-radius:14px;background:#333;color:white;margin-top:8px}
   #error-clave{color:#ff6b6b;margin-top:10px;display:none}
   #app{display:none}
   #estado{font-size:12px;color:#9aa0ad;text-align:center;margin-bottom:8px}
   #estado.ok{color:#4ade80}
+  /* SOLO LO NUEVO - FICHA PUBLICA + BOTON ADMIN PEQUEÑO */
+  #vista-publica{display:block}
+  #top-admin{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  #top-admin span{font-size:13px;color:#9aa0ad}
+  #link-admin{background:none;border:none;color:#9aa0ad;font-size:12px;text-decoration:underline;cursor:pointer;padding:6px}
+  .motivo-publico{color:#111;font-weight:600;margin-top:3px}
+  #buscadorPublico{width:100%;padding:13px;border-radius:14px;border:none;font-size:15px;background:white;color:#111;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -55,11 +64,24 @@
   <p>Introduce la clave de acceso</p>
   <input id="input-clave" type="password" inputmode="numeric" placeholder="••••" autocomplete="off">
   <button id="btn-clave" onclick="comprobarClave()">Entrar</button>
+  <button id="btn-volver" onclick="volverPublico()">← Volver</button>
   <div id="error-clave">❌ Clave incorrecta</div>
 </div>
 
-<div id="app">
+<!-- FICHA PUBLICA - SOLO PARA VER -->
+<div id="vista-publica">
+  <div id="top-admin"><span>📋 Mis Partes</span><button id="link-admin" onclick="abrirClave()">Admin</button></div>
+  <p style="text-align:center;color:#9aa0ad;font-size:13px;margin:0 0 12px">Aquí salen tus partes y por qué son</p>
   <div id="estado">⏳ Conectando con la base de datos...</div>
+  <input id="buscadorPublico" placeholder="🔍 Buscar por nombre..." oninput="renderPublico()">
+  <div id="contadorPublico" style="text-align:right;font-size:13px;color:#9aa0ad;margin:10px 2px"></div>
+  <div id="listaPublica"></div>
+</div>
+
+<!-- TU APP DE SIEMPRE, TAL CUAL -->
+<div id="app">
+  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#9aa0ad">Panel Papás</span><button onclick="salirAdmin()" style="padding:7px 12px;border-radius:999px;border:none;background:#333;color:white;font-size:12px">👀 Ver ficha pública</button></div>
+  <div id="estado2" style="font-size:12px;color:#9aa0ad;text-align:center;margin:8px 0">⏳ Conectando...</div>
   <input id="buscador" placeholder="🔍 Buscar por nombre..." oninput="render()">
   <button class="btn-norma" onclick="anadirAlumno()">+ Añadir nombre</button>
   <div id="contador"></div>
@@ -85,12 +107,31 @@ const SUPABASE_URL = "https://semoeiilmmzfjgzqiscp.supabase.co";
 const SUPABASE_KEY = "sb_publishable_SDNhqpqi0hGgJXxR1rpM2g_I6Jm1NWr";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// SOLO LO NUEVO - ABRIR / CERRAR ADMIN
+function abrirClave(){
+  document.getElementById('pantalla-clave').classList.add('show');
+  document.getElementById('error-clave').style.display='none';
+  setTimeout(()=>document.getElementById('input-clave').focus(),100);
+}
+function volverPublico(){
+  document.getElementById('pantalla-clave').classList.remove('show');
+  document.getElementById('input-clave').value='';
+}
+function salirAdmin(){
+  sessionStorage.removeItem('acceso_partes');
+  document.getElementById('app').style.display='none';
+  document.getElementById('vista-publica').style.display='block';
+  renderPublico();
+}
+
 function comprobarClave(){
   let v = document.getElementById('input-clave').value.trim();
   if(v === CLAVE_ACCESO){
-    document.getElementById('pantalla-clave').style.display = 'none';
+    document.getElementById('pantalla-clave').classList.remove('show');
+    document.getElementById('vista-publica').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     sessionStorage.setItem('acceso_partes','si');
+    document.getElementById('input-clave').value='';
     render();
   } else {
     document.getElementById('error-clave').style.display = 'block';
@@ -99,10 +140,6 @@ function comprobarClave(){
   }
 }
 document.getElementById('input-clave').addEventListener('keydown', function(e){ if(e.key==='Enter') comprobarClave(); });
-if(sessionStorage.getItem('acceso_partes')==='si'){
-  document.getElementById('pantalla-clave').style.display='none';
-  document.getElementById('app').style.display='block';
-}
 
 let alumnos = [];
 let alumnoActual = null;
@@ -111,7 +148,9 @@ let ultimaVersion = "";
 
 function setEstado(ok, texto){
   let el = document.getElementById('estado');
+  let el2 = document.getElementById('estado2');
   if(el){ el.textContent = texto; el.className = ok ? 'ok' : ''; }
+  if(el2){ el2.textContent = texto; }
 }
 
 async function cargar(){
@@ -124,13 +163,14 @@ async function cargar(){
       ultimaVersion = JSON.stringify(nuevos);
       localStorage.setItem('partes_final_v2', JSON.stringify(alumnos));
       render();
+      renderPublico();
     }
     setEstado(true, "✅ Conectado - se actualiza solo para los dos");
   }catch(e){
-    // Si falla internet, usar lo guardado en el móvil
     alumnos = JSON.parse(localStorage.getItem('partes_final_v2') || '[]');
     setEstado(false, "⚠️ Sin conexión, usando datos guardados en este móvil");
     render();
+    renderPublico();
   }
 }
 
@@ -171,11 +211,13 @@ async function inicio(){
       ]}
     ];
     await guardar();
-    render();
+    render(); renderPublico();
   }
-  // Revisar cambios de tu pareja cada 3 segundos
+  if(sessionStorage.getItem('acceso_partes')==='si'){
+    document.getElementById('vista-publica').style.display='none';
+    document.getElementById('app').style.display='block';
+  }
   setInterval(cargar, 3000);
-  // Tiempo real si está activado
   try{
     sb.channel('partes-rt').on('postgres_changes',{event:'*',schema:'public',table:'partes'},()=>cargar()).subscribe();
   }catch(e){}
@@ -187,7 +229,7 @@ function anadirAlumno(){
   if(!n) return;
   let c = prompt('Curso:','');
   alumnos.push({nombre:n, curso:c, partes:[]});
-  guardar(); render();
+  guardar(); render(); renderPublico();
 }
 function abrirModal(i){
   alumnoActual = i;
@@ -211,29 +253,58 @@ function guardarParte(){
     hora: ahora.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
     motivo: motivo
   });
-  guardar(); cerrarModal(); render();
+  guardar(); cerrarModal(); render(); renderPublico();
 }
 function editarMotivo(i, indiceReal){
   let actual = alumnos[i].partes[indiceReal].motivo || '';
   let nuevo = prompt('Escribe el motivo del parte:', actual);
   if(nuevo===null) return;
   alumnos[i].partes[indiceReal].motivo = nuevo.trim();
-  guardar(); render();
+  guardar(); render(); renderPublico();
   setTimeout(()=>{ let el=document.getElementById('hist-'+i); if(el) el.style.display='block'; },50);
 }
 function quitarParte(i){
   if(alumnos[i].partes.length===0) return;
   if(confirm('¿Quitar el último parte de '+alumnos[i].nombre+'?')){
-    alumnos[i].partes.pop(); guardar(); render();
+    alumnos[i].partes.pop(); guardar(); render(); renderPublico();
   }
 }
 function borrarAlumno(i){
-  if(confirm('¿Borrar a '+alumnos[i].nombre+'?')){ alumnos.splice(i,1); guardar(); render(); }
+  if(confirm('¿Borrar a '+alumnos[i].nombre+'?')){ alumnos.splice(i,1); guardar(); render(); renderPublico(); }
 }
 function toggleHist(i){
   let el = document.getElementById('hist-'+i);
   el.style.display = el.style.display==='none' ? 'block' : 'none';
 }
+
+// SOLO LO NUEVO - FICHA PUBLICA SOLO PARA VER
+function renderPublico(){
+  let busc = document.getElementById('buscadorPublico');
+  if(!busc) return;
+  let filtro = busc.value.toLowerCase();
+  let filtrados = alumnos.filter(a=>a.nombre.toLowerCase().includes(filtro));
+  document.getElementById('contadorPublico').innerHTML = '🧑‍🎓 &nbsp; ' + filtrados.length + ' nombres';
+  let html = '';
+  filtrados.forEach(a=>{
+    let i = alumnos.indexOf(a);
+    let total = a.partes.length;
+    let pct = Math.min(total/5*100,100);
+    let aviso = total>=4 ? `<div class="aviso">⚠️ ¡Cuidado! Te falta ${5-total} para quedarte sin privilegios</div>` : total>0 ? `<div class="aviso">${total} partes acumuladas</div>` : `<div class="aviso">Sin partes</div>`;
+    let hist = a.partes.map((p)=>{
+      let textoMotivo = p.motivo ? p.motivo : 'Sin motivo escrito todavía';
+      return `<div class="parte-item"><div class="fecha">${p.dia} ${p.fecha} - ${p.hora}</div><div class="motivo-publico">👉 Por qué: ${textoMotivo}</div></div>`;
+    }).reverse().join('') || 'Sin partes todavía';
+    html += `<div class="card">
+      <div class="top"><div><div class="nombre">${a.nombre}</div><div class="curso">Curso: ${a.curso}</div></div><div class="tiene">✅ TIENE</div></div>
+      <div class="num">${total} <span>/ 5 partes</span></div>
+      <div class="barra"><div class="relleno" style="width:${pct}%"></div></div>
+      ${aviso}
+      <div class="historial" style="display:block">${hist}</div>
+    </div>`;
+  });
+  document.getElementById('listaPublica').innerHTML = html;
+}
+
 function render(){
   if(!document.getElementById('buscador')) return;
   let filtro = document.getElementById('buscador').value.toLowerCase();
@@ -264,4 +335,4 @@ function render(){
 }
 </script>
 </body>
- </html>
+</html>
